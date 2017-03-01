@@ -9,6 +9,8 @@ import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import static com.wenld.pullrefreshlib.LoadViewCreator.PULL_TO_LOADMORE;
+import static com.wenld.pullrefreshlib.LoadViewCreator.UP_TO_LOADMORE;
 import static com.wenld.pullrefreshlib.R.id.tvMoreText;
 
 /**
@@ -19,14 +21,14 @@ import static com.wenld.pullrefreshlib.R.id.tvMoreText;
  * 默认加载器
  */
 
-public class DefaultLoadCreator extends LoadViewCreator {
+public class DefaultRightLoadCreator extends RefreshViewCreator {
     // 加载数据的ImageView
     private TextView moreText;
     private ImageView arrowIv;
 
     private int currentRefreshStatus;
 
-    public DefaultLoadCreator() {
+    public DefaultRightLoadCreator() {
         initRotateAnim();
     }
 
@@ -34,7 +36,7 @@ public class DefaultLoadCreator extends LoadViewCreator {
     }
 
     @Override
-    public View getLoadView(Context context, ViewGroup parent) {
+    public View getRefreshView(Context context, ViewGroup parent) {
         View moreView = LayoutInflater.from(context).inflate(R.layout.item_load_more, parent, false);
         moreText = (TextView) moreView.findViewById(tvMoreText);
         arrowIv = (ImageView) moreView.findViewById(R.id.ivRefreshArrow);
@@ -45,23 +47,23 @@ public class DefaultLoadCreator extends LoadViewCreator {
     public void onPull(int currentDragHeight, int refreshViewHeight, int currentRefreshStatus) {
         float rotate = ((float) currentDragHeight) / refreshViewHeight;
         // 不断下拉的过程中旋转图片
-        arrowIv.setRotation(rotate / 360);
+        arrowIv.setRotation(rotate * 360);
 
         if (this.currentRefreshStatus == currentRefreshStatus)
             return;
         this.currentRefreshStatus = currentRefreshStatus;
 
         if (currentRefreshStatus == PULL_TO_LOADMORE) {
-            moreText.setText("上拉加载更多");
+            moreText.setText("右拉刷新");
         }
         if (currentRefreshStatus == UP_TO_LOADMORE) {
-            moreText.setText("松开加载更多");
+            moreText.setText("松开刷新");
         }
     }
 
     @Override
-    public void onLoading() {
-        moreText.setText("正在加载数据");
+    public void onRefreshing() {
+        moreText.setText("正在刷新数据");
         if (animation != null) {
             animation.cancel();
         }
@@ -76,7 +78,7 @@ public class DefaultLoadCreator extends LoadViewCreator {
     RotateAnimation animation;
 
     @Override
-    public void onStopLoad() {
+    public void onStopRefresh() {
         // 停止加载的时候清除动画
         arrowIv.clearAnimation();
         if (animation != null) {

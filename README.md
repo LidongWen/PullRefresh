@@ -84,3 +84,6 @@ allprojects {
     public abstract void onStopLoad();
 
 ```
+
+### bug
+多手操作问题；

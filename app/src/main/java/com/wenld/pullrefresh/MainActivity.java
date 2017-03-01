@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         list.add(new ItemClass(" 左滑加载 ", PullLeftActivity.class));
+        list.add(new ItemClass(" 增加右滑刷新 ", PullRightActivity.class));
 
         this.rlvAtyFilter = (RecyclerView) findViewById(R.id.rlv_activity_main);
 

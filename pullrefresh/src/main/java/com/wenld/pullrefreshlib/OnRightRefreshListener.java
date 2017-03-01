@@ -7,6 +7,6 @@ package com.wenld.pullrefreshlib;
  * github: https://github.com/LidongWen
  */
 
-public interface OnLoadMoreListener {
-    void onLoadmore();
+public interface OnRightRefreshListener {
+    void onRefresh();
 }

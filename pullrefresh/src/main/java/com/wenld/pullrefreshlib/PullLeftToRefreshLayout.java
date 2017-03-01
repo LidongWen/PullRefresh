@@ -11,7 +11,6 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
 import static com.wenld.pullrefreshlib.LoadViewCreator.PULL_TO_LOADMORE;
@@ -32,36 +31,37 @@ public class PullLeftToRefreshLayout extends FrameLayout {
     private String TAG = "PullLeftToRefreshLayout";
     //加载更多辅助类
     private LoadViewCreator loadViewCreator;
-    private View mChildView;//第一个布局
 
-    private boolean isLoading = false;  //是否正在加载
-    private boolean isLoadMore = true;// 是否可以被加载
-    private boolean isTranslationChild = true;//是否位移子布局
-    //用作计算;
-    private DecelerateInterpolator interpolator = new DecelerateInterpolator(10);
+
+    private boolean isLeftLoading = false;  //是否正在加载
+    private boolean isLeftLoadMore = true;// 是否可以被加载
+
 
     private View moreView;
     /**
      * moreView 的宽度
      */
-    private int moreViewWidth;
-    /**
-     * loadView的偏移量
-     */
-    float offsetxLoadView;
-    /**
-     * view的偏移量
-     */
-    float offsetxChild;
+    private int moreViewWidth = 0;
     /**
      * 弹回动画
      */
     private ValueAnimator mBackAnimator;
+    /**
+     * loadView的偏移量
+     */
+    private float offsetxLoadView = 0;
 
 
-    private static final long BACK_ANIM_DUR = 400; //回弹时间;
+    protected View mChildView;//子布局
+    protected boolean isTranslationChild = true;//是否位移子布局
+    /**
+     * view的偏移量
+     */
+    protected float offsetxChild = 0;
+    protected static final long BACK_ANIM_DUR = 400; //回弹时间;
 
-    private OnLoadMoreListener onLoadMoreListener;
+
+    private OnLeftLoadMoreListener onLoadMoreListener;
 
     public PullLeftToRefreshLayout(Context context) {
         this(context, null);
@@ -119,30 +119,28 @@ public class PullLeftToRefreshLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (isLoading) {
+        if (isLeftLoading()) {
             return super.onTouchEvent(event);
         }
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
+                if (!isCanDrag())
+                    return true;
                 mTouchCurX = event.getX();
 
-                float dx = mTouchStartX - mTouchCurX;
-                dx = Math.min(moreViewWidth * 2, dx);
-                dx = Math.max(0, dx);
-                if (moreView == null || dx <= 0) {
+                float dx = mTouchCurX - mTouchStartX;
+                if (moreView == null || dx > 0) {
                     return true;
                 }
-                float unit = dx / 2;
-                float offsetxTouch = dx;// interpolator.getInterpolation(unit / moreViewWidth) * unit;
+                int offsetxTouch = countDistance((int) dx, 0);
 
-                //刷新布局
-                setRefreshViewMarginRight((int) offsetxTouch - moreViewWidth);
+                setRefreshViewMarginRight(-offsetxTouch - moreViewWidth);
 
                 if (loadViewCreator != null) {
                     if (offsetxLoadView > 0) {
-                        loadViewCreator.onPull((int) offsetxTouch, moreViewWidth, UP_TO_LOADMORE);
+                        loadViewCreator.onPull(offsetxTouch, moreViewWidth, UP_TO_LOADMORE);
                     } else {
-                        loadViewCreator.onPull((int) offsetxTouch, moreViewWidth, PULL_TO_LOADMORE);
+                        loadViewCreator.onPull(offsetxTouch, moreViewWidth, PULL_TO_LOADMORE);
                     }
                 }
 
@@ -152,7 +150,7 @@ public class PullLeftToRefreshLayout extends FrameLayout {
                 mTouchCurX = 0;
                 if (isCanDrag()) {
                     if (offsetxLoadView > 0) {
-                        isLoading = true;
+                        isLeftLoading = true;
                         mBackAnimator.setFloatValues(offsetxLoadView, 0);
                         mBackAnimator.start();
                     } else {
@@ -171,7 +169,11 @@ public class PullLeftToRefreshLayout extends FrameLayout {
      * @return
      */
     private boolean isCanDrag() {
-        return isLoadMore && !isLoading && moreView != null && mChildView != null;
+        return isLeftLoadMore && !isLeftLoading && moreView != null && mChildView != null;
+    }
+
+    protected boolean isLeftLoading() {
+        return isLeftLoading;
     }
 
     private void addMoreView() {
@@ -180,7 +182,7 @@ public class PullLeftToRefreshLayout extends FrameLayout {
 
         LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
-        params.setMargins(0, 0, -moreViewWidth, 0);
+        params.rightMargin = -moreViewWidth;
         moreView.setLayoutParams(params);
 
         addViewInternal(moreView);
@@ -212,8 +214,8 @@ public class PullLeftToRefreshLayout extends FrameLayout {
 
         @Override
         public void onAnimationEnd(Animator animator) {
-            Log.e(TAG, "onAnimationEnd::" + isLoading);
-            if (isLoading) {
+            Log.e(TAG, "onAnimationEnd::" + isLeftLoading);
+            if (isLeftLoading) {
                 if (loadViewCreator != null) {
                     loadViewCreator.onLoading();
                 }
@@ -243,7 +245,6 @@ public class PullLeftToRefreshLayout extends FrameLayout {
      * 设置刷新View的rightMargin  以及 位移hild
      */
     private void setRefreshViewMarginRight(int marginRight) {
-
         proceeOffsetxChild(marginRight);
         MarginLayoutParams params = (MarginLayoutParams) moreView.getLayoutParams();
         params.rightMargin = (int) offsetxLoadView;
@@ -262,14 +263,11 @@ public class PullLeftToRefreshLayout extends FrameLayout {
     }
 
     private void addViewInternal(@NonNull View child) {
-        super.addView(child);
+        this.addView(child);
     }
 
     @Override
     public void addView(View child) {
-        if (getChildCount() >= 1) {
-            throw new RuntimeException("you can only attach one child");
-        }
         super.addView(child);
     }
 
@@ -281,16 +279,14 @@ public class PullLeftToRefreshLayout extends FrameLayout {
         addMoreView();
     }
 
-    public boolean isLoadMore() {
-        return isLoadMore;
-    }
-
-    public void setLoadMore(boolean loadMore) {
-        isLoadMore = loadMore;
+    public void setLoadMoreLeft(boolean loadMore) {
+        isLeftLoadMore = loadMore;
     }
 
     public void stopLoad() {
-        isLoading = false;
+        if (!isLeftLoading)
+            return;
+        isLeftLoading = false;
         if (loadViewCreator != null) {
             loadViewCreator.onStopLoad();
         }
@@ -299,11 +295,43 @@ public class PullLeftToRefreshLayout extends FrameLayout {
 
     }
 
-    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+    public void setOnLeftLoadMoreListener(OnLeftLoadMoreListener onLoadMoreListener) {
         this.onLoadMoreListener = onLoadMoreListener;
     }
 
     public void setTranslationChild(boolean translationChild) {
         isTranslationChild = translationChild;
+    }
+
+    /**
+     * 计算 弹性后的 偏移量
+     *
+     * @param dx
+     * @param F  阻力值
+     */
+    protected int countDistance(int dx, float F) {
+        return dx / 2;
+    }
+
+    /**
+     * 计算 RefreshView的偏移量，以及视图的偏移量
+     *
+     * @param ontouchDistance 手指偏移量
+     * @param defaultOffsetX  默认偏移量
+     * @param direction       坐标方向
+     * @return int[]
+     */
+    protected int[] proceeOffsetxChild(int ontouchDistance, int defaultOffsetX, int direction) {
+
+//        if (ontouchDistance < defaultOffsetX) {
+//            ontouchDistance = defaultOffsetX;
+//        }
+//        offsetxLoadView = ontouchDistance;
+//        offsetxChild = direction*ontouchDistance +defaultOffsetX;
+
+        int[] ints = new int[2];
+        ints[0] = ontouchDistance;
+        ints[1] = direction*ontouchDistance +defaultOffsetX;
+        return ints;
     }
 }

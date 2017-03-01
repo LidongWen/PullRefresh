@@ -16,6 +16,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PullLeftActivity" />
+        <activity android:name=".PullRightActivity" />
     </application>
 
 </manifest>

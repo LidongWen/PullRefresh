@@ -6,28 +6,41 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 
 import com.wenld.pullrefreshlib.DefaultLeftLoadCreator;
+import com.wenld.pullrefreshlib.DefaultRightLoadCreator;
 import com.wenld.pullrefreshlib.OnLeftLoadMoreListener;
-import com.wenld.pullrefreshlib.PullLeftToRefreshLayout;
+import com.wenld.pullrefreshlib.OnRightRefreshListener;
+import com.wenld.pullrefreshlib.PullHorizontalRefreshLayout;
 
-public class PullLeftActivity extends AppCompatActivity {
+public class PullRightActivity extends AppCompatActivity {
 
     private ImageView iv_aty_pullleft;
-    private PullLeftToRefreshLayout pullleft;
+    private PullHorizontalRefreshLayout pullleft;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_pullleft);
+        setContentView(R.layout.activity_pull);
         initView();
-        DefaultLeftLoadCreator defaultLoadCreator = new DefaultLeftLoadCreator();
-
-//       ((ViewGroup) findViewById(R.id.content)).addView( defaultLoadCreator.getLoadView(this, (ViewGroup) findViewById(R.id.content)));
-//        defaultLoadCreator.onLoading();
-//        defaultLoadCreator.onStopLoad();
 
         pullleft.setLoadViewCreator(new DefaultLeftLoadCreator());
+        pullleft.setRefreshViewCreator(new DefaultRightLoadCreator());
 //        pullleft.setLoadMoreLeft(false);
+//        pullleft.setRightRefresh(false);
 //        pullleft.setTranslationChild(false);
+      initListener();
+    }
+
+    private void initListener() {
+        pullleft.setOnRightRefreshListener(new OnRightRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        pullleft.stopRefresh();
+                    }
+                }, 1000);
+            }
+        });
         pullleft.setOnLeftLoadMoreListener(new OnLeftLoadMoreListener() {
             @Override
             public void onLoadmore() {
@@ -36,13 +49,12 @@ public class PullLeftActivity extends AppCompatActivity {
                         pullleft.stopLoad();
                     }
                 }, 1000);
-
             }
         });
     }
 
     private void initView() {
         iv_aty_pullleft = (ImageView) findViewById(R.id.iv_aty_pullleft);
-        pullleft = (PullLeftToRefreshLayout) findViewById(R.id.pullleft);
+        pullleft = (PullHorizontalRefreshLayout) findViewById(R.id.pullHorizontal);
     }
 }

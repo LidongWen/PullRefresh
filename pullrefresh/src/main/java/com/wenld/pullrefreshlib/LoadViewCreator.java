@@ -9,7 +9,7 @@ import android.view.ViewGroup;
  * Author: 温利东 on 2017/2/27 10:23.
  * blog: http://blog.csdn.net/sinat_15877283
  * github: https://github.com/LidongWen
- * 上拉加载更多的辅助类为了匹配所有效果
+ * 上拉，左拉 加载更多的辅助类为了匹配所有效果
  */
 public abstract class LoadViewCreator {
     //拉获取更多
