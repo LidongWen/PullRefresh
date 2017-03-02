@@ -94,6 +94,7 @@ public class PullHorizontalRefreshLayout extends PullLeftToRefreshLayout {
 
                     //判断 是否在右滑 && 子VIew是否还能右滑
                     if (dx > 0 && !canScrollRight()) {
+                        isTouch = true;
                         return true;
                     }
                 }
@@ -109,11 +110,11 @@ public class PullHorizontalRefreshLayout extends PullLeftToRefreshLayout {
         }
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                if (isCanDrag()) {
+                if (isCanDrag() && isTouch) {
                     mTouchCurX = event.getX();
                     float dx = mTouchCurX - mTouchStartX;
                     if (refreshView == null || dx < 0) {
-                        return super.onTouchEvent(event);
+                        return true;
                     }
                     int offsetxTouch = countDistance((int) dx, 0);
                     //刷新布局
@@ -133,7 +134,8 @@ public class PullHorizontalRefreshLayout extends PullLeftToRefreshLayout {
             case MotionEvent.ACTION_UP:
                 mTouchStartX = 0;
                 mTouchCurX = 0;
-                if (isCanDrag()&&offsetxChild>0) {
+                if (isCanDrag() && offsetxChild > 0 && isTouch) {
+                    isTouch = false;
                     if (refreshViewOffsetX > 0) {
                         isRightRefreshing = true;
                         mBackAnimator.setFloatValues(refreshViewOffsetX, 0);
@@ -148,6 +150,8 @@ public class PullHorizontalRefreshLayout extends PullLeftToRefreshLayout {
         }
         return super.onTouchEvent(event);
     }
+
+    private boolean isTouch = false;
 
     /**
      * 是否可以被拖拽
